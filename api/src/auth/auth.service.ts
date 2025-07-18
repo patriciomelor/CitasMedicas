@@ -15,17 +15,17 @@ export class AuthService {
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.usersService.findOneByEmail(email);
     if (user && (await bcrypt.compare(pass, user.password))) {
-      const { password, ...result } = user; // Excluimos la contraseña del resultado
+      const { password: _, ...result } = user; // Excluimos la contraseña del resultado
       return result;
     }
     return null;
   }
 
   // Genera el token JWT
-  async login(user: any) {
+  async login(user: { email: string; id: string; role: string }) {
     const payload = { email: user.email, sub: user.id, role: user.role };
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: await this.jwtService.signAsync(payload),
     };
   }
 }

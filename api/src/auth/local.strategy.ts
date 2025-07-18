@@ -10,11 +10,14 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     super({ usernameField: 'email' }); // Le decimos que el "username" será el campo "email"
   }
 
-  async validate(email: string, password: string): Promise<any> {
+  async validate(
+    email: string,
+    password: string,
+  ): Promise<Omit<any, 'password'>> {
     const user = await this.authService.validateUser(email, password);
     if (!user) {
       throw new UnauthorizedException();
     }
-    return user;
+    return user as Omit<any, 'password'>;
   }
 }

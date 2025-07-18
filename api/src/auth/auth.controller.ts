@@ -17,10 +17,10 @@ export class AuthController {
   async register(@Body() createUserDto: any) { // En un proyecto real, usa un DTO para validar
     // Aquí podrías añadir lógica para solo permitir crear pacientes, por ejemplo
     const user = await this.usersService.create({
-        email: createUserDto.email,
-        password: createUserDto.password,
-        fullName: createUserDto.fullName,
-        role: createUserDto.role || UserRole.PATIENT, // Por defecto, es Paciente
+      email: createUserDto.email,
+      password: createUserDto.password,
+      fullName: createUserDto.fullName,
+      role: createUserDto.role || UserRole.PATIENT, // Por defecto, es Paciente
     });
     // Opcional: puedes loguear al usuario inmediatamente después de registrarse
     return this.authService.login(user);
@@ -36,7 +36,7 @@ export class AuthController {
   // GET /auth/profile - Un endpoint protegido para probar
   @UseGuards(AuthGuard('jwt')) // Usa la JwtStrategy para proteger
   @Get('profile')
-  getProfile(@Request() req) {
+  getProfile(@Request() req: { user: any }) {
     return req.user; // Gracias a JwtStrategy, req.user contiene el payload del token
   }
 }

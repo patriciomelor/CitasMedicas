@@ -10,13 +10,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // Extrae el token del header 'Authorization: Bearer ...'
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET'),
+      secretOrKey: configService.get<string>('JWT_SECRET') || '',
     });
   }
 
   // El payload decodificado del token se pasa aquí
-  async validate(payload: any) {
+  validate(payload: { sub: string; email: string; role: string }) {
     // Lo que retornemos aquí se inyectará en el objeto `request.user`
     return { id: payload.sub, email: payload.email, role: payload.role };
   }
 }
+// src/auth/jwt.strategy.ts
