@@ -28,7 +28,7 @@ export class UsersService {
 
   async create(userData: Partial<User>): Promise<User> {
     if (!userData.password) {
-      throw new BadRequestException('Password is required');
+      throw new BadRequestException('Se requiere contraseña');
     }
 
     const hashedPassword = await bcrypt.hash(userData.password, 10);

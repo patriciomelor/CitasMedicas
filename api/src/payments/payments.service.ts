@@ -32,10 +32,10 @@ async createPreference(appointmentId: string, userId: string) {
     });
 
     if (!appointment) {
-      throw new NotFoundException('Appointment not found or you are not the owner.');
+      throw new NotFoundException('Cita no encontrada o no eres el propietario.');
     }
     if (appointment.status !== AppointmentStatus.PENDING_PAYMENT) {
-      throw new BadRequestException('This appointment cannot be paid for.');
+      throw new BadRequestException('Esta cita no se puede pagar.');
     }
 
     const appointmentPrice = 5000;
@@ -54,12 +54,12 @@ async createPreference(appointmentId: string, userId: string) {
         },
       ],
       back_urls: {
-        success: `${notificationHost}/payment-success`, // <-- URL PÚBLICA
-        failure: `${notificationHost}/payment-failure`, // <-- URL PÚBLICA
-        pending: `${notificationHost}/payment-pending`, // <-- URL PÚBLICA
+        success: `${notificationHost}/payment-success`,
+        failure: `${notificationHost}/payment-failure`, 
+        pending: `${notificationHost}/payment-pending`, 
       },
       auto_return: 'approved' as const,
-      notification_url: `${notificationHost}/payments/webhook`, // <-- URL PÚBLICA
+      notification_url: `${notificationHost}/payments/webhook`, 
     };
 
     try {
@@ -77,8 +77,8 @@ async createPreference(appointmentId: string, userId: string) {
         init_point: result.init_point,
       };
     } catch (error) {
-      console.error('Error creating Mercado Pago preference:', error.cause || error.message);
-      throw new BadRequestException('Could not create payment preference.');
+      console.error('Error al crear preferencia de Mercado Pago:', error.cause || error.message);
+      throw new BadRequestException('No se pudo crear la preferencia de pago. Por favor, inténtalo de nuevo más tarde.');
     }
   }
   async handleWebhook(mercadopagoId: string) {

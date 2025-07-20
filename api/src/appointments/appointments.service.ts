@@ -17,7 +17,7 @@ export class AppointmentsService {
   async requestAppointment(createDto: CreateAppointmentDto, patient: User) {
     const doctor = await this.userRepository.findOneBy({ id: createDto.doctorId, role: UserRole.DOCTOR });
     if (!doctor) {
-      throw new BadRequestException('Doctor not found');
+      throw new BadRequestException('Doctor/a no encontrado');
     }
 
     const appointmentTime = new Date(createDto.startTime);
@@ -25,7 +25,7 @@ export class AppointmentsService {
 
     const isValidTime = (appointmentHour >= 7 && appointmentHour < 12) || (appointmentHour >= 14 && appointmentHour < 18);
     if (!isValidTime) {
-      throw new BadRequestException('Appointments are only allowed between 7:00-12:00 and 14:00-18:00.');
+      throw new BadRequestException('Las citas sólo se permiten entre las 7:00 y las 12:00 y entre las 14:00 y las 18:00.');
     }
 
     const endTime = new Date(appointmentTime.getTime() + 30 * 60 * 1000); // Citas de 30 minutos
@@ -37,7 +37,7 @@ export class AppointmentsService {
       },
     });
     if (existingAppointment) {
-      throw new ConflictException('This time slot is already booked.');
+      throw new ConflictException('Este horario ya está reservado. Por favor, elige otro.');
     }
 
     const newAppointment = this.appointmentRepository.create({ patient, doctor, startTime: appointmentTime, endTime });
@@ -73,11 +73,11 @@ export class AppointmentsService {
       where: { id: appointmentId, doctor: { id: doctor.id } },
     });
     if (!appointment) {
-      throw new NotFoundException('Appointment not found.');
+      throw new NotFoundException('Cita no encontrada.');
     }
 
     if (appointment.status !== AppointmentStatus.PAID) {
-      throw new BadRequestException('Cannot confirm an unpaid appointment.');
+      throw new BadRequestException('No se puede confirmar una cita no pagada.');
     }
 
     appointment.status = AppointmentStatus.CONFIRMED;
