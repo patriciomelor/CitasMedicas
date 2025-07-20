@@ -1,4 +1,5 @@
-import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+// src/appointments/appointments.service.ts
+import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
 import { Appointment, AppointmentStatus } from './entities/appointment.entity';
@@ -14,45 +15,35 @@ export class AppointmentsService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async requestAppointment(createAppointmentDto: CreateAppointmentDto, patient: User) {
-    const { doctorId, startTime } = createAppointmentDto;
-
-    const doctor = await this.userRepository.findOneBy({ id: doctorId, role: UserRole.DOCTOR });
+  async requestAppointment(createDto: CreateAppointmentDto, patient: User) {
+    const doctor = await this.userRepository.findOneBy({ id: createDto.doctorId, role: UserRole.DOCTOR });
     if (!doctor) {
       throw new BadRequestException('Doctor not found');
     }
 
-    const appointmentTime = new Date(startTime);
+    const appointmentTime = new Date(createDto.startTime);
     const appointmentHour = appointmentTime.getUTCHours();
 
-    // 1. Validación: No se puede pedir cita en un horario no permitido (7-12 y 14-18 UTC)
+    // Validación: Horario permitido (7-12 y 14-18 UTC)
     const isValidTime = (appointmentHour >= 7 && appointmentHour < 12) || (appointmentHour >= 14 && appointmentHour < 18);
     if (!isValidTime) {
       throw new BadRequestException('Appointments are only allowed between 7:00-12:00 and 14:00-18:00.');
     }
 
-    const endTime = new Date(appointmentTime.getTime() + 60 * 60 * 1000); // Asumimos citas de 1 hora
+    const endTime = new Date(appointmentTime.getTime() + 30 * 60 * 1000); // Citas de 30 minutos
 
-    // 2. Validación: No se puede pedir cita en un horario ya ocupado
+    // Validación: Horario ya ocupado
     const existingAppointment = await this.appointmentRepository.findOne({
       where: {
-        doctor: { id: doctorId },
+        doctor: { id: createDto.doctorId },
         startTime: Between(appointmentTime, endTime),
       },
     });
-
     if (existingAppointment) {
       throw new ConflictException('This time slot is already booked.');
     }
 
-    const newAppointment = this.appointmentRepository.create({
-      patient,
-      doctor,
-      startTime: appointmentTime,
-      endTime,
-      status: AppointmentStatus.PENDING_PAYMENT,
-    });
-
+    const newAppointment = this.appointmentRepository.create({ patient, doctor, startTime: appointmentTime, endTime });
     return this.appointmentRepository.save(newAppointment);
   }
 
@@ -60,16 +51,40 @@ export class AppointmentsService {
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
+    tomorrow.setUTCDate(today.getUTCDate() + 1);
 
     return this.appointmentRepository.find({
       where: {
         doctor: { id: doctor.id },
         startTime: Between(today, tomorrow),
       },
-      relations: ['patient'], // Para incluir los datos del paciente
+      relations: ['patient'],
+      order: { startTime: 'ASC' },
     });
   }
 
-  // Añadiremos más métodos aquí después (confirmar, pagar, etc.)
+  async getPatientAgenda(patient: User) {
+    return this.appointmentRepository.find({
+      where: { patient: { id: patient.id } },
+      relations: ['doctor'],
+      order: { startTime: 'DESC' },
+    });
+  }
+
+  async confirmAppointment(appointmentId: string, doctor: User) {
+    const appointment = await this.appointmentRepository.findOne({
+      where: { id: appointmentId, doctor: { id: doctor.id } },
+    });
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found.');
+    }
+
+    // Validación: No se puede confirmar una cita que no ha sido pagada.
+    if (appointment.status !== AppointmentStatus.PAID) {
+      throw new BadRequestException('Cannot confirm an unpaid appointment.');
+    }
+
+    appointment.status = AppointmentStatus.CONFIRMED;
+    return this.appointmentRepository.save(appointment);
+  }
 }

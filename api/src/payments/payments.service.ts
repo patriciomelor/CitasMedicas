@@ -1,16 +1,15 @@
+// src/payments/payments.service.ts
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Appointment, AppointmentStatus } from '../appointments/entities/appointment.entity';
 import { Repository } from 'typeorm';
 import { Payment } from './entities/payment.entity';
-
-// Importaciones de Mercado Pago
 import { MercadoPagoConfig, Preference } from 'mercadopago';
+import { Payment as MercadoPagoPayment } from 'mercadopago/dist/clients/payment'; // Importa el tipo
 
 @Injectable()
 export class PaymentsService {
-  // Cliente de Mercado Pago
   private readonly client: MercadoPagoConfig;
 
   constructor(
@@ -20,13 +19,20 @@ export class PaymentsService {
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
   ) {
-    // Inicializa el cliente de Mercado Pago
-    this.client = new MercadoPagoConfig({ 
-      accessToken: this.configService.get('MERCADOPAGO_ACCESS_TOKEN'),
+    const accessToken = this.configService.get('MERCADOPAGO_ACCESS_TOKEN');
+
+
+    // --- LÍNEA DE DEPURACIÓN ---
+    console.log('--- USANDO MERCADOPAGO ACCESS TOKEN:', accessToken, '---');
+    // -------------------------
+
+    this.client = new MercadoPagoConfig({
+      accessToken: accessToken || '',
     });
   }
+// En src/payments/payments.service.ts
 
-  async createPreference(appointmentId: string, userId: string) {
+async createPreference(appointmentId: string, userId: string) {
     const appointment = await this.appointmentRepository.findOne({
       where: { id: appointmentId, patient: { id: userId } },
     });
@@ -34,48 +40,73 @@ export class PaymentsService {
     if (!appointment) {
       throw new NotFoundException('Appointment not found or you are not the owner.');
     }
-
     if (appointment.status !== AppointmentStatus.PENDING_PAYMENT) {
       throw new BadRequestException('This appointment cannot be paid for.');
     }
 
-    const appointmentPrice = 5000; // Precio: 5000 CLP
-
+    const appointmentPrice = 5000;
     const preference = new Preference(this.client);
 
-    const result = await preference.create({
-      body: {
-        items: [
-          {
-            id: appointment.id,
-            title: 'Cita Médica Online',
-            quantity: 1,
-            unit_price: appointmentPrice,
-            currency_id: 'CLP', // Moneda local
-          },
-        ],
-        // URL a la que Mercado Pago enviará notificaciones del pago
-        notification_url: 'https://tu-servidor.com/payments/webhook', // ¡Importante! La cambiaremos para pruebas
-        back_urls: {
-          success: 'http://localhost:3001/payment-success', // URL para el frontend
-          failure: 'http://localhost:3001/payment-failure',
+    // --- URL PÚBLICA PARA PRUEBAS ---
+    // ¡RECUERDA USAR TU PROPIA URL DE NGROK AQUÍ!
+    const notificationHost = 'https://f062276cb47b.ngrok-free.app'; // <-- ¡Pega tu URL aquí!
+
+    const preferenceBody = {
+      items: [
+        {
+          id: appointment.id,
+          title: 'Cita Médica',
+          quantity: 1,
+          unit_price: appointmentPrice,
+          currency_id: 'CLP',
         },
-        auto_return: 'approved', // Redirige automáticamente al pagar
+      ],
+      back_urls: {
+        success: `${notificationHost}/payment-success`, // <-- URL PÚBLICA
+        failure: `${notificationHost}/payment-failure`, // <-- URL PÚBLICA
+        pending: `${notificationHost}/payment-pending`, // <-- URL PÚBLICA
       },
-    });
-
-    // Guardar un registro del intento de pago (opcional, pero recomendado)
-    const newPayment = this.paymentRepository.create({
-      appointment,
-      amount: appointmentPrice,
-      stripePaymentIntentId: result.id, // Guardamos el ID de la preferencia
-    });
-    await this.paymentRepository.save(newPayment);
-
-    // Devolvemos la URL de pago para el frontend
-    return {
-      preferenceId: result.id,
-      init_point: result.init_point, // URL de checkout
+      auto_return: 'approved' as const,
+      notification_url: `${notificationHost}/payments/webhook`, // <-- URL PÚBLICA
     };
+
+    try {
+      const result = await preference.create({ body: preferenceBody });
+
+      const newPayment = this.paymentRepository.create({
+        appointment,
+        amount: appointmentPrice,
+        paymentGatewayId: result.id,
+      });
+      await this.paymentRepository.save(newPayment);
+
+      return {
+        preferenceId: result.id,
+        init_point: result.init_point,
+      };
+    } catch (error) {
+      console.error('Error creating Mercado Pago preference:', error.cause || error.message);
+      throw new BadRequestException('Could not create payment preference.');
+    }
   }
+  async handleWebhook(mercadopagoId: string) {
+  try {
+    const mp = new MercadoPagoPayment(this.client);
+    const paymentInfo = await mp.get({ id: mercadopagoId });
+
+    // El ID de nuestra cita está en los metadatos
+    const appointmentId = paymentInfo.metadata?.appointment_id;
+
+    if (appointmentId && paymentInfo.status === 'approved') {
+      const appointment = await this.appointmentRepository.findOneBy({ id: appointmentId });
+      if (appointment) {
+        appointment.status = AppointmentStatus.PAID;
+        await this.appointmentRepository.save(appointment);
+        console.log(`Cita ${appointmentId} actualizada a PAID.`);
+      }
+    }
+  } catch (error) {
+    console.error('Error procesando el webhook de Mercado Pago:', error);
+  }
+}
 }
