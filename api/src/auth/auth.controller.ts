@@ -12,31 +12,27 @@ export class AuthController {
     private usersService: UsersService,
   ) {}
 
-  // POST /auth/register
   @Post('register')
-  async register(@Body() createUserDto: any) { // En un proyecto real, usa un DTO para validar
-    // Aquí podrías añadir lógica para solo permitir crear pacientes, por ejemplo
+  async register(@Body() createUserDto: any) { 
+ 
     const user = await this.usersService.create({
       email: createUserDto.email,
       password: createUserDto.password,
       fullName: createUserDto.fullName,
-      role: createUserDto.role || UserRole.PATIENT, // Por defecto, es Paciente
+      role: createUserDto.role || UserRole.PATIENT, 
     });
-    // Opcional: puedes loguear al usuario inmediatamente después de registrarse
     return this.authService.login(user);
   }
 
-  // POST /auth/login
-  @UseGuards(AuthGuard('local')) // Usa la LocalStrategy
+  @UseGuards(AuthGuard('local')) 
   @Post('login')
   async login(@Request() req) {
     return this.authService.login(req.user);
   }
 
-  // GET /auth/profile - Un endpoint protegido para probar
-  @UseGuards(AuthGuard('jwt')) // Usa la JwtStrategy para proteger
+  @UseGuards(AuthGuard('jwt')) 
   @Get('profile')
   getProfile(@Request() req: { user: any }) {
-    return req.user; // Gracias a JwtStrategy, req.user contiene el payload del token
+    return req.user; 
   }
 }

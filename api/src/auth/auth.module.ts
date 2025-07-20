@@ -1,4 +1,3 @@
-// src/auth/auth.module.ts
 import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
@@ -11,18 +10,18 @@ import { JwtStrategy } from './jwt.strategy';
 
 @Module({
   imports: [
-    UsersModule, // Necesitamos el UsersService
+    UsersModule, 
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '60m' }, // El token expira en 60 minutos
+        signOptions: { expiresIn: '60m' }, 
       }),
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService,LocalStrategy, JwtStrategy], // Añadiremos las strategies aquí después
+  providers: [AuthService,LocalStrategy, JwtStrategy], 
 })
 export class AuthModule {}

@@ -1,4 +1,3 @@
-// src/payments/entities/payment.entity.ts
 import { Appointment } from '../../appointments/entities/appointment.entity';
 import { Column, CreateDateColumn, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 
@@ -17,10 +16,10 @@ export class Payment {
   appointment: Appointment;
 
   @Column()
-  amount: number; // Guardaremos el monto en centavos/pesos
+  amount: number; 
 
   @Column({ unique: true })
-  paymentGatewayId: string; // ID de la preferencia de Mercado Pago
+  paymentGatewayId: string;
 
   @Column({ type: 'enum', enum: PaymentStatus, default: PaymentStatus.FAILED })
   status: PaymentStatus;

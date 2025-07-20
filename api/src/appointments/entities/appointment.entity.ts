@@ -1,4 +1,3 @@
-// src/appointments/entities/appointment.entity.ts
 import { User } from '../../users/entities/user.entity';
 import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 

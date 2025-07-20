@@ -1,4 +1,3 @@
-// src/auth/guards/roles.guard.ts
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { UserRole } from '../../users/entities/user.entity';
@@ -13,7 +12,7 @@ export class RolesGuard implements CanActivate {
       [context.getHandler(), context.getClass()]
     );
     if (!requiredRoles) {
-      return true; // Si no se definen roles, se permite el acceso
+      return true; 
     }
     const request = context.switchToHttp().getRequest<{ user?: { role?: UserRole[] } }>();
     const user = request.user;

@@ -1,4 +1,3 @@
-// src/appointments/appointments.service.ts
 import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
@@ -24,7 +23,6 @@ export class AppointmentsService {
     const appointmentTime = new Date(createDto.startTime);
     const appointmentHour = appointmentTime.getUTCHours();
 
-    // Validación: Horario permitido (7-12 y 14-18 UTC)
     const isValidTime = (appointmentHour >= 7 && appointmentHour < 12) || (appointmentHour >= 14 && appointmentHour < 18);
     if (!isValidTime) {
       throw new BadRequestException('Appointments are only allowed between 7:00-12:00 and 14:00-18:00.');
@@ -32,7 +30,6 @@ export class AppointmentsService {
 
     const endTime = new Date(appointmentTime.getTime() + 30 * 60 * 1000); // Citas de 30 minutos
 
-    // Validación: Horario ya ocupado
     const existingAppointment = await this.appointmentRepository.findOne({
       where: {
         doctor: { id: createDto.doctorId },
@@ -79,7 +76,6 @@ export class AppointmentsService {
       throw new NotFoundException('Appointment not found.');
     }
 
-    // Validación: No se puede confirmar una cita que no ha sido pagada.
     if (appointment.status !== AppointmentStatus.PAID) {
       throw new BadRequestException('Cannot confirm an unpaid appointment.');
     }

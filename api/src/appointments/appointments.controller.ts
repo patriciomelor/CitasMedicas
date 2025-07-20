@@ -1,4 +1,3 @@
-// src/appointments/appointments.controller.ts
 import { Controller, Post, Body, UseGuards, Request, Get, Patch, Param } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AppointmentsService } from './appointments.service';

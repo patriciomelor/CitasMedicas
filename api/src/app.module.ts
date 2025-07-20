@@ -11,7 +11,7 @@ import { PaymentsModule } from './payments/payments.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, // Hace que las variables de entorno estén disponibles en todo el proyecto
+      isGlobal: true,
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -20,8 +20,8 @@ import { PaymentsModule } from './payments/payments.module';
       username: process.env.DB_USERNAME || 'user',
       password: process.env.DB_PASSWORD || 'password',
       database: process.env.DB_DATABASE || 'appointments_db',
-      autoLoadEntities: true, // Carga automáticamente las entidades que definamos
-      synchronize: true, // ¡OJO! Sincroniza el schema. Solo para desarrollo.
+      autoLoadEntities: true, 
+      synchronize: true, 
     }),
     UsersModule,
     AppointmentsModule,

@@ -1,4 +1,3 @@
-// src/appointments/dto/create-appointment.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDateString, IsNotEmpty, IsUUID } from 'class-validator';
 

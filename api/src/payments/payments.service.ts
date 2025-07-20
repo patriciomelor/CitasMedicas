@@ -21,16 +21,10 @@ export class PaymentsService {
   ) {
     const accessToken = this.configService.get('MERCADOPAGO_ACCESS_TOKEN');
 
-
-    // --- LÍNEA DE DEPURACIÓN ---
-    console.log('--- USANDO MERCADOPAGO ACCESS TOKEN:', accessToken, '---');
-    // -------------------------
-
     this.client = new MercadoPagoConfig({
       accessToken: accessToken || '',
     });
   }
-// En src/payments/payments.service.ts
 
 async createPreference(appointmentId: string, userId: string) {
     const appointment = await this.appointmentRepository.findOne({
@@ -47,9 +41,7 @@ async createPreference(appointmentId: string, userId: string) {
     const appointmentPrice = 5000;
     const preference = new Preference(this.client);
 
-    // --- URL PÚBLICA PARA PRUEBAS ---
-    // ¡RECUERDA USAR TU PROPIA URL DE NGROK AQUÍ!
-    const notificationHost = 'https://f062276cb47b.ngrok-free.app'; // <-- ¡Pega tu URL aquí!
+    const notificationHost = 'https://f062276cb47b.ngrok-free.app';
 
     const preferenceBody = {
       items: [

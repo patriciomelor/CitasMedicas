@@ -1,4 +1,3 @@
-// src/payments/payments.controller.ts
 import { Controller, Post, Body, UseGuards, Request,HttpCode } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -6,7 +5,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/entities/user.entity';
 import { PaymentsService } from './payments.service';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CreatePreferenceDto } from './dto/create-preference.dto'; // <-- 1. IMPORTA EL DTO
+import { CreatePreferenceDto } from './dto/create-preference.dto'; 
 
 @ApiTags('Payments')
 @ApiBearerAuth()
@@ -29,7 +28,7 @@ export class PaymentsController {
     );
   }
   @Post('webhook')
-  @HttpCode(200) // Siempre respondemos con 200 para que MP sepa que lo recibimos
+  @HttpCode(200) 
   handleWebhook(@Body() body: any) {
     // El 'topic' puede ser 'payment' o 'merchant_order'
     if (body.type === 'payment') {
