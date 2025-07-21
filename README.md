@@ -33,6 +33,27 @@ API RESTful construida con **NestJS** para gestionar el ciclo de vida de citas m
 - **Contenerización**: Docker & Docker Compose
 - **Validación**: `class-validator`, `class-transformer`
 
+## 🏛️ Arquitectura y Patrones de Diseño
+
+El proyecto sigue una **arquitectura modular en capas**, una práctica recomendada que organiza el código para que sea mantenible, escalable y fácil de probar. Aunque es una aplicación monolítica, su estructura interna está claramente dividida en módulos con responsabilidades únicas.
+
+-   **Arquitectura Modular (Monolito Bien Hecho)**: La API está organizada en módulos cohesivos (`Auth`, `Users`, `Appointments`, `Payments`). Cada módulo encapsula una parte específica del dominio del negocio, lo que facilita su desarrollo y mantenimiento independiente.
+
+-   **Patrones de Diseño Utilizados**: NestJS promueve el uso de patrones de diseño probados en la industria, que han sido aplicados en este proyecto:
+    -   **Inyección de Dependencias (DI)**: Es la base del framework. Los servicios, repositorios y otros proveedores se "inyectan" en los controladores y otros servicios, desacoplando los componentes y facilitando las pruebas unitarias.
+    -   **Patrón Repository**: Se utiliza a través de TypeORM (`@InjectRepository`) para abstraer la lógica de acceso a datos. Los servicios no interactúan directamente con la base de datos, sino a través de los repositorios, separando las preocupaciones.
+    -   **Patrón Strategy**: Implementado en el sistema de autenticación con Passport.js. Cada estrategia (`local` para login con email/contraseña y `jwt` para autenticación basada en token) es un "algoritmo" intercambiable para validar usuarios.
+    -   **Patrón Decorator**: Usado extensivamente en todo el código (`@Controller`, `@Injectable`, `@Post`, `@Get`, `@Roles`, etc.) para añadir metadatos y funcionalidades a las clases y métodos de forma declarativa.
+
+### ✍️ Buenas Prácticas y Código Limpio
+
+Se ha puesto especial énfasis en seguir buenas prácticas de codificación para asegurar que el código no solo funcione, sino que también sea fácil de leer y mantener.
+
+-   **Nombres Descriptivos**: Los métodos, variables y clases tienen nombres claros y en inglés, siguiendo el estándar de la industria. Esto hace que el código sea auto-documentado.
+    -   **Métodos**: `requestAppointment`, `createPreference`, `confirmAppointment`, `getDoctorTodayAppointments`.
+    -   **Variables**: `existingAppointment`, `appointmentTime`, `isValidTime`, `newAppointment`.
+-   **Principio de Responsabilidad Única (SRP)**: Cada clase y método tiene una única y bien definida responsabilidad. Por ejemplo, `AppointmentsService` se encarga de la lógica de negocio de las citas, mientras que `AppointmentsController` gestiona las rutas y las peticiones HTTP.
+
 ## 🚀 Puesta en Marcha
 
 Sigue estos pasos para levantar el proyecto en un entorno de desarrollo local.
